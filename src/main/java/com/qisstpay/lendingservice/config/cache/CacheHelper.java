@@ -36,10 +36,7 @@ public class CacheHelper {
 
 
     public void removeAuthTokenAndIdFromCache(Long id) {
-        log.info("removeAuthTokenAndIdFromCache id: {}",id);
-        log.info(cacheManager.getCache(AUTH).get(String.format(KEY, AUTH, id)).get().toString());
         cacheManager.getCache(AUTH).evictIfPresent(String.format(KEY, AUTH, id));
-        log.info(cacheManager.getCache(AUTH_TOKEN_ID).get(AUTH_TOKEN_ID).get().toString());
         cacheManager.getCache(AUTH_TOKEN_ID).evictIfPresent(AUTH_TOKEN_ID);
     }
 

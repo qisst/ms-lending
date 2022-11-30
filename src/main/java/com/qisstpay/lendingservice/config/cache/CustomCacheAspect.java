@@ -2,7 +2,6 @@ package com.qisstpay.lendingservice.config.cache;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
@@ -28,7 +27,6 @@ import java.util.stream.Collectors;
 
 @Aspect
 @Component
-@Slf4j
 public class CustomCacheAspect {
 
     @Autowired
@@ -73,16 +71,14 @@ public class CustomCacheAspect {
 
         CacheEntry cacheEntry = objectMapper.convertValue(cacheManager.getCache(prefix).get(key) != null ? cacheManager.getCache(prefix).get(key).get() : null, new TypeReference<CacheEntry>() {
         });
-        log.info("cache aspect prefix: {} key: {}", prefix, key);
         if (cacheEntry != null && !cacheEntry.getExpiresAt().isBefore(LocalDateTime.now())) {
+
             if (cacheEntry.getObject() instanceof List<?>) {
                 return ((ArrayList<?>) cacheEntry.getObject()).stream().map(item -> (objectMapper).convertValue(item, cacheEntry.getListObjectClass())).collect(Collectors.toList());
             } else {
-                Signature signature = proceedingJoinPoint.getSignature();
+                Signature signature =  proceedingJoinPoint.getSignature();
                 Class returnType = ((MethodSignature) signature).getReturnType();
-                Object object = objectMapper.convertValue(cacheEntry.getObject(), returnType);
-                log.info("return cache object: {}", object);
-                return object;
+               return  objectMapper.convertValue(cacheEntry.getObject(),returnType);
             }
         }
 
@@ -111,7 +107,7 @@ public class CustomCacheAspect {
         }
 
         cacheManager.getCache(prefix).put(key, CacheEntry.builder().object(object).listObjectClass(c).expiresAt(LocalDateTime.now().plus(timeout, ChronoUnit.MILLIS)).build());
-        log.info("Put cache object: {}", cacheManager.getCache(prefix).get(String.format(key)).get().toString());
+
         return object;
     }
 
