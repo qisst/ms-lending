@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TasdeeqCallRepository extends JpaRepository<TasdeeqCallLog, Long> {
-    String getLastTokenId = "SELECT id FROM tasdeeq_calls_logs where end_point = 'AUTH' and status = 'SUCCESS' ORDER BY id DESC LIMIT 1";
+    String getLastTokenId = "SELECT id FROM call_logs_tasdeeq where end_point = 'AUTH' and status = 'SUCCESS' ORDER BY id DESC LIMIT 1";
 
     @Query(value = getLastTokenId, nativeQuery = true)
     Long findLastTokenId();
