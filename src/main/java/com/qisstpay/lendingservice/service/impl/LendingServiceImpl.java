@@ -36,11 +36,13 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -72,13 +74,13 @@ public class LendingServiceImpl implements LendingService {
 
     private static final String SUCCESS_STATUS_CODE = "0";
 
-    private final String xChanelHeaderKey        = "X-Channel";
-    private final String xChanelHeaderVal        = "subgateway";
-    private final String xClientIdHeaderKey      = "X-IBM-Client-Id";
-    private final String xClientIdHeaderVal      = "0d9fe5ca-8147-4b05-a9af-c7ef2e0df3af";
-    private final String xClientSecretHeaderKey  = "X-IBM-Client-Secret";
-    private final String xClientSecretHeaderVal  = "I4lR4yW0uP4yW3eQ7rR4vL0bK0pX6mV5cS7cN4iL7rC6pG2cA1";
-    private final String xHashValueKey           = "X-Hash-Value";
+    private final String xChanelHeaderKey = "X-Channel";
+    private final String xChanelHeaderVal = "subgateway";
+    private final String xClientIdHeaderKey = "X-IBM-Client-Id";
+    private final String xClientIdHeaderVal = "0d9fe5ca-8147-4b05-a9af-c7ef2e0df3af";
+    private final String xClientSecretHeaderKey = "X-IBM-Client-Secret";
+    private final String xClientSecretHeaderVal = "I4lR4yW0uP4yW3eQ7rR4vL0bK0pX6mV5cS7cN4iL7rC6pG2cA1";
+    private final String xHashValueKey = "X-Hash-Value";
     private final String CALLING_LENDING_SERVICE = "Calling lending Service";
 
     @Autowired
@@ -147,7 +149,7 @@ public class LendingServiceImpl implements LendingService {
     @Override
     public TransferResponseDto transfer(TransferRequestDto transferRequestDto, LenderCallLog lenderCallLog) throws JsonProcessingException {
         log.info("In LendingServiceImpl class...");
-        validateData(transferRequestDto,lenderCallLog);
+        validateData(transferRequestDto, lenderCallLog);
 
         // Consumer sign-up, if not already
         Consumer savedConsumer = null;
@@ -164,7 +166,7 @@ public class LendingServiceImpl implements LendingService {
             consumer = existingConsumer.get();
         }
 
-        if (transferRequestDto.getType() ==null || transferRequestDto.getType().equals(TransferType.EASYPAISA)) {
+        if (transferRequestDto.getType() == null || transferRequestDto.getType().equals(TransferType.EASYPAISA)) {
             return transferThroughEP(transferRequestDto, lenderCallLog, consumer);
         } else if (transferRequestDto.getType().equals(TransferType.HMB)) {
             return hmbPaymentService.transfer(transferRequestDto, lenderCallLog, consumer);
@@ -202,30 +204,29 @@ public class LendingServiceImpl implements LendingService {
         }
 
         /* cnic validation*/
+        if (transferRequestDto.getType() != null && transferRequestDto.getType().equals(TransferType.HMB)) {
+            if (StringUtils.isBlank(transferRequestDto.getCnic())) {
+                throw new CustomException(HttpStatus.BAD_REQUEST.toString(), "cnic is missing or empty.");
 
 
-        if (StringUtils.isBlank(transferRequestDto.getCnic())) {
-            throw new CustomException(HttpStatus.BAD_REQUEST.toString(), "cnic is missing or empty.");
-
-
+            } else if (!IsValidCNIC(transferRequestDto.getCnic())) {
+                throw new CustomException(HttpStatus.BAD_REQUEST.toString(), "cnic must follow the XXXXX-XXXXXXX-X format!");
+            }
         }
-        else if(!IsValidCNIC(transferRequestDto.getCnic())){
-            throw new CustomException(HttpStatus.BAD_REQUEST.toString(), "cnic must follow the XXXXX-XXXXXXX-X format!");
-        }
-
     }
-    private boolean IsValidCNIC(String cnic)
-    {
-        if(!cnic.isBlank()){
-        String cnicRegex = "^[0-9]{5}-[0-9]{7}-[0-9]$";
-        Pattern pattern = Pattern.compile(cnicRegex);
-        Matcher matcher = pattern.matcher(cnic);
 
-        return matcher.matches();
+    private boolean IsValidCNIC(String cnic) {
+        if (!cnic.isBlank()) {
+            String cnicRegex = "^[0-9]{5}-[0-9]{7}-[0-9]$";
+            Pattern pattern = Pattern.compile(cnicRegex);
+            Matcher matcher = pattern.matcher(cnic);
+
+            return matcher.matches();
 
         }
-    return false;
+        return false;
     }
+
     @Override
     public TransferResponseDto transferV2(TransferRequestDto transferRequestDto, LenderCallLog lenderCallLog, User user) throws JsonProcessingException {
         log.info("In LendingServiceImpl class...");
@@ -235,7 +236,7 @@ public class LendingServiceImpl implements LendingService {
         }
 
         LenderPaymentGateway lenderPaymentGateway = lenderPaymentGatewayRepository.findByIsDefaultTrue()
-                .orElseThrow(()-> new CustomException(HttpStatus.INTERNAL_SERVER_ERROR.toString(), "No Default Payment Service for Lender"));
+                .orElseThrow(() -> new CustomException(HttpStatus.INTERNAL_SERVER_ERROR.toString(), "No Default Payment Service for Lender"));
 
 
         // Consumer sign-up, if not already
@@ -495,9 +496,9 @@ public class LendingServiceImpl implements LendingService {
 
         if (lendingTransaction != null) {
             ServiceType serviceType = lendingTransaction.getLenderCall().getServiceType();
-            if(serviceType.equals(ServiceType.EP)){
+            if (serviceType.equals(ServiceType.EP)) {
                 return checkEPStatus(lendingTransaction, lenderCallLog);
-            }else if(serviceType.equals(ServiceType.HMB)){
+            } else if (serviceType.equals(ServiceType.HMB)) {
                 return hmbPaymentService.checkTransactionStatus(lendingTransaction, lenderCallLog);
             }
         }
